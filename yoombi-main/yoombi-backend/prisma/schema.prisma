@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      String   @default("USER") // USER, OWNER, ADMIN
+  avatar    String?
+  joinDate  DateTime @default(now())
+  isBlocked Boolean  @default(false)
+  isApproved Boolean  @default(false)
+  isEmailVerified Boolean @default(false)
+  loyaltyPoints Int     @default(0)
+  expoPushToken  String?
+  appVersion     String?
+  platform       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews   Review[]
+  ownedRestaurant Restaurant?
+  following   Follow[]
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+  supportTickets SupportTicket[]
+  visits         Visit[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Restaurant {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  cuisine     String
+  area        String
+  city        String
+  phone       String?
+  email       String?
+  images      String[]
+  rating      Float    @default(0.0)
+  latitude    Float    @default(0.0)
+  longitude   Float    @default(0.0)
+  vibe        String?
+  dressCode   String?
+  isMichelin  Boolean  @default(false)
+  isApproved  Boolean  @default(false)
+  isTrending  Boolean  @default(false)
+  totalReviews Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  ownerId     String   @unique
+  owner       User     @relation(fields: [ownerId], references: [id])
+  
+  menuItems   MenuItem[]
+  reviews     Review[]
+  followers   Follow[]
+  stories     Story[]
+  articles    Article[]
+  visits      Visit[]
+}
+
+model MenuItem {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  priceRaw     Int
+  category     String
+  image        String?
+  available    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  rating       Int
+  text         String
+  ownerReply   String?
+  repliedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  user        String
+  target      String
+  details     String
+  timestamp   DateTime @default(now())
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     String
+  message     String   @default("")
+  adminReply  String?
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, CLOSED
+  priority    String   @default("MEDIUM")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  messages    Int      @default(1)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // INFO, SUCCESS, WARNING, PROMO
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Follow {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, restaurantId])
+}
+
+model Story {
+  id           String      @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items        StoryItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model StoryItem {
+  id        String   @id @default(uuid())
+  storyId   String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  type      String   // IMAGE, VIDEO, TEXT
+  url       String?  // For IMAGE and VIDEO
+  text      String?  // For TEXT or captions
+  duration  Int      @default(5) // in seconds
+  createdAt DateTime @default(now())
+}
+
+model Article {
+  id           String     @id @default(uuid())
+  title        String
+  content      String
+  category     String
+  imageUrl     String?
+  status       String     @default("Published") // "Published", "Draft"
+  
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Visit {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  pointsEarned Int        @default(50)
+  createdAt    DateTime   @default(now())
+
+  @@index([userId])
+  @@index([restaurantId])
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  otp       String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

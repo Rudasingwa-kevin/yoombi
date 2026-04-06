@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "yoombi",
+    "slug": "yoombi",
+    "scheme": "yoombi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/Symbol.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/Symbol.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#051923"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rudasingwa.yoombi"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Symbol.png",
+        "backgroundColor": "#051923"
+      },
+      "usesCleartextTraffic": true,
+      "package": "com.rudasingwa.yoombi"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
