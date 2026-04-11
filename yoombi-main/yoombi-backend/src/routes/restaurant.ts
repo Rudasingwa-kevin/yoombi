@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
             where: where.AND.length > 0 ? where : {},
             include: {
                 _count: {
-                    select: { followers: true, reviews: true }
+                    select: { followers: true, reviews: true, likes: true }
                 }
             },
             orderBy: { rating: 'desc' }
@@ -54,7 +54,8 @@ router.get('/', async (req, res) => {
         const formatted = restaurants.map(r => ({
             ...r,
             totalReviews: r._count.reviews,
-            followers: r._count.followers
+            followers: r._count.followers,
+            likes: r._count.likes
         }));
 
         res.json({ success: true, data: formatted });
@@ -77,7 +78,7 @@ router.get('/mine', authenticateToken, async (req: AuthRequest, res: Response) =
             where: { ownerId: userId },
             include: {
                 _count: {
-                    select: { followers: true, reviews: true }
+                    select: { followers: true, reviews: true, likes: true }
                 }
             }
         });
@@ -91,7 +92,8 @@ router.get('/mine', authenticateToken, async (req: AuthRequest, res: Response) =
             data: {
                 ...restaurant,
                 totalReviews: restaurant._count.reviews,
-                followers: restaurant._count.followers
+                followers: restaurant._count.followers,
+                likes: restaurant._count.likes
             }
         });
     } catch (error) {
@@ -111,7 +113,7 @@ router.get('/:id', async (req, res) => {
             where: { id },
             include: {
                 _count: {
-                    select: { followers: true, reviews: true }
+                    select: { followers: true, reviews: true, likes: true }
                 }
             }
         });
@@ -125,7 +127,8 @@ router.get('/:id', async (req, res) => {
             data: {
                 ...restaurant,
                 totalReviews: restaurant._count.reviews,
-                followers: restaurant._count.followers
+                followers: restaurant._count.followers,
+                likes: restaurant._count.likes
             }
         });
     } catch (error) {
@@ -262,6 +265,74 @@ router.post('/:id/follow', authenticateToken, async (req: AuthRequest, res: Resp
         res.json({ success: true, message: 'Followed successfully' });
     } catch (error) {
         console.error('[RESTAURANT] Follow error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * POST /api/restaurants/:id/like
+ * Current user likes a restaurant. Awards 2 loyalty points.
+ */
+router.post('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        const userId = req.user?.id;
+
+        if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+        // Check if already liked
+        const existing = await prisma.like.findUnique({
+            where: {
+                userId_restaurantId: { userId, restaurantId: id }
+            }
+        });
+
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'Already liked' });
+        }
+
+        // Create like and award points in a transaction
+        await prisma.$transaction([
+            prisma.like.create({
+                data: { userId, restaurantId: id }
+            }),
+            prisma.user.update({
+                where: { id: userId },
+                data: { loyaltyPoints: { increment: 2 } }
+            })
+        ]);
+
+        res.json({ success: true, message: 'Liked successfully' });
+    } catch (error) {
+        console.error('[RESTAURANT] Like error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * DELETE /api/restaurants/:id/like
+ * Current user unlikes a restaurant.
+ */
+router.delete('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        const userId = req.user?.id;
+
+        if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+        await prisma.like.delete({
+            where: {
+                userId_restaurantId: { userId, restaurantId: id }
+            }
+        });
+
+        res.json({ success: true, message: 'Unliked successfully' });
+    } catch (error) {
+        // If not found, ignore
+        if ((error as any).code === 'P2025') {
+            return res.json({ success: true, message: 'Not liked' });
+        }
+        console.error('[RESTAURANT] Unlike error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });

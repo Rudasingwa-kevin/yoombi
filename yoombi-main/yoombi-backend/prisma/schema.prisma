@@ -29,6 +29,7 @@ model User {
   reviews   Review[]
   ownedRestaurant Restaurant?
   following   Follow[]
+  likes       Like[]
   refreshTokens RefreshToken[]
   notifications Notification[]
   supportTickets SupportTicket[]
@@ -72,6 +73,7 @@ model Restaurant {
   menuItems   MenuItem[]
   reviews     Review[]
   followers   Follow[]
+  likes       Like[]
   stories     Story[]
   articles    Article[]
   visits      Visit[]
@@ -221,3 +223,28 @@ model EmailVerification {
 
   @@index([email])
 }
+
+model Like {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, restaurantId])
+}
+
+model HomepageSection {
+  id            String   @id @default(uuid())
+  title         String
+  subtitle      String?
+  type          String   @default("DYNAMIC") // DYNAMIC, MANUAL
+  criteria      String?  // TOP_RATED, NEW_COMERS, EXCLUSIVE
+  restaurantIds String[] // For MANUAL type
+  order         Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+

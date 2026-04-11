@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Dimensions } from 'react-native';
-import { ChevronLeft, Layout, Edit3, Move, Plus, Trash2, Eye, Save, X, ChevronUp, ChevronDown, Check } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Dimensions, ActivityIndicator } from 'react-native';
+import { ChevronLeft, Layout, Edit3, Move, Plus, Trash2, Eye, Save, X, ChevronUp, ChevronDown, Check, Zap, HandMetal } from 'lucide-react-native';
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { restaurantService } from '../services/api';
-import { RestaurantDTO } from '../types/dto';
+import { restaurantService, cmsService } from '../services/api';
+import { RestaurantDTO, HomepageSectionDTO } from '../types/dto';
 import CuratedCollection from '../components/CuratedCollection';
 
 const { width, height } = Dimensions.get('window');
@@ -21,105 +21,145 @@ const AdminCMSScreen = ({ navigation }: any) => {
             </View>
         );
     }
-    const [collections, setCollections] = useState<{id: string, title: string, subtitle: string, restaurantIds: string[]}[]>([]);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editData, setEditData] = useState({ title: '', subtitle: '' });
-    const [allRestaurants, setAllRestaurants] = useState<RestaurantDTO[]>([]);
 
-    React.useEffect(() => {
-        restaurantService.getAll()
-            .then(res => setAllRestaurants(res.data || (res as any) || []))
-            .catch(e => console.warn('[AdminCMS] Failed to fetch restaurants:', e));
+    const [sections, setSections] = useState<HomepageSectionDTO[]>([]);
+    const [allRestaurants, setAllRestaurants] = useState<RestaurantDTO[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editData, setEditData] = useState<Partial<HomepageSectionDTO>>({});
+
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [sectRes, restRes] = await Promise.all([
+                cmsService.getAdminSections(),
+                restaurantService.getAll()
+            ]);
+            setSections(sectRes || []);
+            setAllRestaurants(restRes || []);
+        } catch (e) {
+            console.error('[AdminCMS] Fetch error:', e);
+            Alert.alert('Error', 'Failed to load CMS data.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
     }, []);
-    
+
     // Add Restaurant Modal
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-    const [targetCollectionId, setTargetCollectionId] = useState<string | null>(null);
+    const [targetSectionId, setTargetSectionId] = useState<string | null>(null);
     const [restaurantSearch, setRestaurantSearch] = useState('');
 
     // Preview Modal
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
-    const [previewCollection, setPreviewCollection] = useState<{id: string, title: string, subtitle: string, restaurantIds: string[]} | null>(null);
+    const [previewSection, setPreviewSection] = useState<HomepageSectionDTO | null>(null);
 
-    // Create New Collection
-    const handleCreateCollection = () => {
-        const newId = `c${collections.length + 1}`;
-        const newCollection = {
-            id: newId,
-            title: 'New Collection',
-            subtitle: 'Description here',
-            restaurantIds: [],
-        };
-        setCollections([newCollection, ...collections]);
-        handleEdit(newCollection);
+    const handleCreateSection = async () => {
+        try {
+            const newSection = await cmsService.createSection({
+                title: 'New Section',
+                subtitle: 'Add a description...',
+                type: 'DYNAMIC',
+                criteria: 'TOP_RATED',
+                order: sections.length,
+                active: true
+            });
+            setSections([...sections, newSection]);
+            handleEdit(newSection);
+        } catch (e) {
+            Alert.alert('Error', 'Failed to create section.');
+        }
     };
 
-    const handleDeleteCollection = (id: string) => {
-        Alert.alert('Delete Collection', 'Are you sure you want to remove this curated list?', [
+    const handleDeleteSection = (id: string) => {
+        Alert.alert('Delete Section', 'Are you sure you want to remove this homepage section?', [
             { text: 'Cancel', style: 'cancel' },
             { 
                 text: 'Delete', 
                 style: 'destructive',
-                onPress: () => setCollections(prev => prev.filter(c => c.id !== id)) 
+                onPress: async () => {
+                    try {
+                        await cmsService.deleteSection(id);
+                        setSections(prev => prev.filter(s => s.id !== id));
+                    } catch (e) {
+                        Alert.alert('Error', 'Failed to delete section.');
+                    }
+                } 
             }
         ]);
     };
 
-    const handleEdit = (collection: {id: string, title: string, subtitle: string, restaurantIds: string[]}) => {
-        setEditingId(collection.id);
-        setEditData({ title: collection.title, subtitle: collection.subtitle });
+    const handleEdit = (section: HomepageSectionDTO) => {
+        setEditingId(section.id);
+        setEditData(section);
     };
 
-    const handleSave = () => {
-        setCollections(prev => prev.map(c => c.id === editingId ? { ...c, ...editData } : c));
-        setEditingId(null);
-        Alert.alert('Saved', 'Collection info updated.');
+    const handleSave = async () => {
+        if (!editingId || !editData) return;
+        try {
+            const updated = await cmsService.updateSection(editingId, editData);
+            setSections(prev => prev.map(s => s.id === editingId ? updated : s));
+            setEditingId(null);
+            Alert.alert('Saved', 'Section updated successfully.');
+        } catch (e) {
+            Alert.alert('Error', 'Failed to save changes.');
+        }
     };
 
-    const handleRemoveRestaurant = (collectionId: string, restaurantId: string) => {
-        setCollections(prev => prev.map(c => {
-            if (c.id === collectionId) {
-                return { ...c, restaurantIds: c.restaurantIds.filter(id => id !== restaurantId) };
-            }
-            return c;
-        }));
+    const handleUpdateField = (field: keyof HomepageSectionDTO, value: any) => {
+        setEditData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleReorder = (collectionId: string, index: number, direction: 'up' | 'down') => {
-        setCollections(prev => prev.map(c => {
-            if (c.id === collectionId) {
-                const newIds = [...c.restaurantIds];
-                const targetIndex = direction === 'up' ? index - 1 : index + 1;
-                if (targetIndex >= 0 && targetIndex < newIds.length) {
-                    const temp = newIds[index];
-                    newIds[index] = newIds[targetIndex];
-                    newIds[targetIndex] = temp;
-                    return { ...c, restaurantIds: newIds };
-                }
-            }
-            return c;
-        }));
+    const handleRemoveRestaurant = (restaurantId: string) => {
+        const newIds = (editData.restaurantIds || []).filter(id => id !== restaurantId);
+        handleUpdateField('restaurantIds', newIds);
+    };
+
+    const handleReorderRestaurant = (index: number, direction: 'up' | 'down') => {
+        const newIds = [...(editData.restaurantIds || [])];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex >= 0 && targetIndex < newIds.length) {
+            const temp = newIds[index];
+            newIds[index] = newIds[targetIndex];
+            newIds[targetIndex] = temp;
+            handleUpdateField('restaurantIds', newIds);
+        }
     };
 
     const handleAddRestaurant = (restaurantId: string) => {
-        if (!targetCollectionId) return;
-        setCollections(prev => prev.map(c => {
-            if (c.id === targetCollectionId && !c.restaurantIds.includes(restaurantId)) {
-                return { ...c, restaurantIds: [...c.restaurantIds, restaurantId] };
-            }
-            return c;
-        }));
+        const currentIds = editData.restaurantIds || [];
+        if (!currentIds.includes(restaurantId)) {
+            handleUpdateField('restaurantIds', [...currentIds, restaurantId]);
+        }
         setIsAddModalVisible(false);
         setRestaurantSearch('');
     };
 
-    const openPreview = (collection: {id: string, title: string, subtitle: string, restaurantIds: string[]}) => {
-        setPreviewCollection(collection);
-        setIsPreviewVisible(true);
+    const openPreview = async (section: HomepageSectionDTO) => {
+        // Fetch preview data (resolved)
+        try {
+            // We use sections from getActiveSections for preview or just resolve locally
+            setPreviewSection(section);
+            setIsPreviewVisible(true);
+        } catch (e) {}
     };
 
-    const renderCollectionItem = ({ item }: { item: {id: string, title: string, subtitle: string, restaurantIds: string[]} }) => {
+    const toggleSectionVisibility = async (id: string, current: boolean) => {
+        try {
+            const updated = await cmsService.updateSection(id, { active: !current });
+            setSections(prev => prev.map(s => s.id === id ? updated : s));
+        } catch (e) {
+            Alert.alert('Error', 'Failed to toggle visibility.');
+        }
+    };
+
+    const renderSectionItem = ({ item }: { item: HomepageSectionDTO }) => {
         const isEditing = editingId === item.id;
+        const displayData = isEditing ? editData : item;
         
         return (
             <View style={[styles.card, { backgroundColor: colors.white, shadowColor: colors.shadow }]}>
@@ -129,34 +169,82 @@ const AdminCMSScreen = ({ navigation }: any) => {
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.gray + '50' }]}
                                 value={editData.title}
-                                onChangeText={(t) => setEditData(prev => ({ ...prev, title: t }))}
-                                placeholder="Collection Title"
+                                onChangeText={(t) => handleUpdateField('title', t)}
+                                placeholder="Section Title"
                             />
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.gray + '50' }]}
                                 value={editData.subtitle}
-                                onChangeText={(t) => setEditData(prev => ({ ...prev, subtitle: t }))}
+                                onChangeText={(t) => handleUpdateField('subtitle', t)}
                                 placeholder="Subtitle"
                             />
+                            
+                            <View style={styles.typeSelector}>
+                                <TouchableOpacity 
+                                    style={[styles.typeBtn, editData.type === 'DYNAMIC' && { backgroundColor: colors.primary }]}
+                                    onPress={() => handleUpdateField('type', 'DYNAMIC')}
+                                >
+                                    <Zap size={16} color={editData.type === 'DYNAMIC' ? 'white' : colors.text} />
+                                    <Text style={[styles.typeBtnText, { color: editData.type === 'DYNAMIC' ? 'white' : colors.text }]}>Automatic</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={[styles.typeBtn, editData.type === 'MANUAL' && { backgroundColor: colors.primary }]}
+                                    onPress={() => handleUpdateField('type', 'MANUAL')}
+                                >
+                                    <HandMetal size={16} color={editData.type === 'MANUAL' ? 'white' : colors.text} />
+                                    <Text style={[styles.typeBtnText, { color: editData.type === 'MANUAL' ? 'white' : colors.text }]}>Manual</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {editData.type === 'DYNAMIC' && (
+                                <View style={styles.criteriaList}>
+                                    {['TOP_RATED', 'NEW_COMERS', 'EXCLUSIVE'].map((c) => (
+                                        <TouchableOpacity 
+                                            key={c}
+                                            onPress={() => handleUpdateField('criteria', c)}
+                                            style={[styles.criteriaBtn, { borderColor: colors.secondary, backgroundColor: editData.criteria === c ? colors.secondary : 'transparent' }]}
+                                        >
+                                            <Text style={[styles.criteriaBtnText, { color: editData.criteria === c ? colors.primary : colors.secondary }]}>
+                                                {c.replace('_', ' ')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
                         </View>
                     ) : (
                         <View style={styles.headerInfo}>
-                            <Text style={[styles.collectionTitle, { color: colors.text }]}>{item.title}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Text style={[styles.collectionTitle, { color: colors.text }]}>{item.title}</Text>
+                                <View style={[styles.badge, { backgroundColor: item.type === 'DYNAMIC' ? colors.secondary + '30' : colors.primary + '30' }]}>
+                                    <Text style={[styles.badgeText, { color: item.type === 'DYNAMIC' ? colors.secondary : colors.primary }]}>
+                                        {item.type}
+                                    </Text>
+                                </View>
+                            </View>
                             <Text style={[styles.collectionSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
                         </View>
                     )}
                     
                     <View style={styles.headerActions}>
                         {isEditing ? (
-                            <TouchableOpacity onPress={handleSave} style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
-                                <Save color={isDark ? colors.secondary : 'white'} size={18} />
-                            </TouchableOpacity>
+                            <View style={{ gap: 8 }}>
+                                <TouchableOpacity onPress={handleSave} style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
+                                    <Save color={isDark ? colors.secondary : 'white'} size={18} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setEditingId(null)} style={[styles.actionBtn, { backgroundColor: colors.gray + '20' }]}>
+                                    <X color={colors.text} size={18} />
+                                </TouchableOpacity>
+                            </View>
                         ) : (
-                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                            <View style={{ gap: 8 }}>
                                 <TouchableOpacity onPress={() => handleEdit(item)} style={[styles.actionBtn, { backgroundColor: colors.secondary + '20' }]}>
                                     <Edit3 color={colors.secondary} size={18} />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDeleteCollection(item.id)} style={[styles.actionBtn, { backgroundColor: '#EF444420' }]}>
+                                <TouchableOpacity onPress={() => toggleSectionVisibility(item.id, item.active)} style={[styles.actionBtn, { backgroundColor: item.active ? '#10B98120' : '#EF444420' }]}>
+                                    <Eye color={item.active ? '#10B981' : '#EF4444'} size={18} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDeleteSection(item.id)} style={[styles.actionBtn, { backgroundColor: '#EF444420' }]}>
                                     <Trash2 color="#EF4444" size={18} />
                                 </TouchableOpacity>
                             </View>
@@ -164,51 +252,60 @@ const AdminCMSScreen = ({ navigation }: any) => {
                     </View>
                 </View>
 
-                <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+                {displayData.type === 'MANUAL' && (
+                    <>
+                        <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+                        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Selected Restaurants ({displayData.restaurantIds?.length || 0})</Text>
+                        
+                        <View style={styles.restaurantList}>
+                            {(displayData.restaurantIds || []).map((id, index) => {
+                                const restaurant = allRestaurants.find(r => r.id === id);
+                                return (
+                                    <View key={id} style={[styles.restaurantRow, { borderBottomColor: colors.gray + '20' }]}>
+                                        <View style={styles.rowLeft}>
+                                            <Text style={[styles.indexText, { color: colors.textSecondary }]}>{index + 1}</Text>
+                                            <Text style={[styles.rowText, { color: colors.text }]} numberOfLines={1}>{restaurant?.name || 'Unknown'}</Text>
+                                        </View>
+                                        {isEditing && (
+                                            <View style={styles.rowActions}>
+                                                <TouchableOpacity onPress={() => handleReorderRestaurant(index, 'up')} disabled={index === 0}>
+                                                    <ChevronUp color={index === 0 ? colors.gray + '50' : colors.textSecondary} size={20} />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => handleReorderRestaurant(index, 'down')} disabled={index === (displayData.restaurantIds?.length || 0) - 1}>
+                                                    <ChevronDown color={index === (displayData.restaurantIds?.length || 0) - 1 ? colors.gray + '50' : colors.textSecondary} size={20} />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => handleRemoveRestaurant(id)}>
+                                                    <X color="#EF4444" size={18} />
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
+                                    </View>
+                                );
+                            })}
+                            {isEditing && (
+                                <TouchableOpacity 
+                                    style={[styles.addButton, { borderColor: colors.secondary, borderStyle: 'dashed' }]}
+                                    onPress={() => {
+                                        setTargetSectionId(item.id);
+                                        setIsAddModalVisible(true);
+                                    }}
+                                >
+                                    <Plus color={colors.secondary} size={20} />
+                                    <Text style={[styles.addButtonText, { color: colors.secondary }]}>Add Restaurant</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </>
+                )}
 
-                <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Restaurants Order ({item.restaurantIds.length})</Text>
-                
-                <View style={styles.restaurantList}>
-                    {item.restaurantIds.map((id, index) => {
-                        const restaurant = allRestaurants.find(r => r.id === id);
-                        return (
-                            <View key={id} style={[styles.restaurantRow, { borderBottomColor: colors.gray + '20' }]}>
-                                <View style={styles.rowLeft}>
-                                    <Text style={[styles.indexText, { color: colors.textSecondary }]}>{index + 1}</Text>
-                                    <Text style={[styles.rowText, { color: colors.text }]} numberOfLines={1}>{restaurant?.name || 'Unknown'}</Text>
-                                </View>
-                                <View style={styles.rowActions}>
-                                    <TouchableOpacity onPress={() => handleReorder(item.id, index, 'up')} disabled={index === 0}>
-                                        <ChevronUp color={index === 0 ? colors.gray + '50' : colors.textSecondary} size={20} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleReorder(item.id, index, 'down')} disabled={index === item.restaurantIds.length - 1}>
-                                        <ChevronDown color={index === item.restaurantIds.length - 1 ? colors.gray + '50' : colors.textSecondary} size={20} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleRemoveRestaurant(item.id, id)}>
-                                        <X color="#EF4444" size={18} />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        );
-                    })}
-                    <TouchableOpacity 
-                        style={[styles.addButton, { borderColor: colors.secondary, borderStyle: 'dashed' }]}
-                        onPress={() => {
-                            setTargetCollectionId(item.id);
-                            setIsAddModalVisible(true);
-                        }}
-                    >
-                        <Plus color={colors.secondary} size={20} />
-                        <Text style={[styles.addButtonText, { color: colors.secondary }]}>Add Restaurant</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.footerActions}>
-                    <TouchableOpacity onPress={() => openPreview(item)} style={styles.footerBtn}>
-                        <Eye color={colors.primary} size={18} />
-                        <Text style={[styles.footerBtnText, { color: colors.primary }]}>Preview on Home</Text>
-                    </TouchableOpacity>
-                </View>
+                {!isEditing && (
+                    <View style={styles.footerActions}>
+                        <TouchableOpacity onPress={() => openPreview(item)} style={styles.footerBtn}>
+                            <Eye color={colors.primary} size={18} />
+                            <Text style={[styles.footerBtnText, { color: colors.primary }]}>View Configuration</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
         );
     };
@@ -224,37 +321,41 @@ const AdminCMSScreen = ({ navigation }: any) => {
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <ChevronLeft color={colors.primary} size={28} />
                 </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h2, { color: colors.primary }]}>Content CMS</Text>
-                <TouchableOpacity onPress={handleCreateCollection}>
+                <Text style={[TYPOGRAPHY.h2, { color: colors.primary }]}>Homepage CMS</Text>
+                <TouchableOpacity onPress={handleCreateSection}>
                     <Plus color={colors.primary} size={28} />
                 </TouchableOpacity>
             </View>
 
-            {/* This uses the local CuratedCollection component which dynamically fetches internally anyway */}
-            
-            <FlatList
-                data={collections}
-                keyExtractor={(item) => item.id}
-                renderItem={renderCollectionItem}
-                contentContainerStyle={styles.listContent}
-                ListHeaderComponent={
-                    <View style={styles.listHeader}>
-                        <View style={styles.cmsStats}>
-                            <Layout size={20} color={colors.secondary} />
-                            <Text style={[styles.statusInfo, { color: colors.textSecondary }]}>
-                                {collections.length} Current Curated Highlights
-                            </Text>
+            {isLoading ? (
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+            ) : (
+                <FlatList
+                    data={sections}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderSectionItem}
+                    contentContainerStyle={styles.listContent}
+                    ListHeaderComponent={
+                        <View style={styles.listHeader}>
+                            <View style={styles.cmsStats}>
+                                <Layout size={20} color={colors.secondary} />
+                                <Text style={[styles.statusInfo, { color: colors.textSecondary }]}>
+                                    {sections.length} Configured Sections
+                                </Text>
+                            </View>
                         </View>
-                    </View>
-                }
-            />
+                    }
+                />
+            )}
 
             {/* Add Restaurant Modal */}
             <Modal visible={isAddModalVisible} animationType="slide" transparent>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Add to Collection</Text>
+                            <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Select Restaurant</Text>
                             <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
                                 <X color={colors.text} size={24} />
                             </TouchableOpacity>
@@ -263,7 +364,7 @@ const AdminCMSScreen = ({ navigation }: any) => {
                         <View style={[styles.searchBox, { backgroundColor: colors.white }]}>
                             <TextInput
                                 style={[styles.searchInput, { color: colors.text }]}
-                                placeholder="Search restaurants..."
+                                placeholder="Search by name or cuisine..."
                                 value={restaurantSearch}
                                 onChangeText={setRestaurantSearch}
                             />
@@ -295,20 +396,22 @@ const AdminCMSScreen = ({ navigation }: any) => {
                         <TouchableOpacity style={styles.closePreview} onPress={() => setIsPreviewVisible(false)}>
                             <X color="white" size={32} />
                         </TouchableOpacity>
-                        <Text style={[TYPOGRAPHY.bodySmall, { color: colors.gray, textAlign: 'center', marginBottom: 20 }]}>HOMEPAGE PREVIEW</Text>
-                        {previewCollection && (
-                             <CuratedCollection
-                                title={previewCollection.title}
-                                subtitle={previewCollection.subtitle}
-                                data={previewCollection.restaurantIds.map(id => allRestaurants.find(r => r.id === id)).filter(Boolean) as any[]}
-                                onPressItem={() => {}}
-                            />
+                        <Text style={[TYPOGRAPHY.bodySmall, { color: colors.gray, textAlign: 'center', marginBottom: 20 }]}>PREVIEW DATA</Text>
+                        
+                        {previewSection && (
+                            <View style={{ backgroundColor: colors.white, borderRadius: 20, padding: 20 }}>
+                                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>{previewSection.title}</Text>
+                                <Text style={[TYPOGRAPHY.bodySmall, { color: colors.textSecondary, marginBottom: 16 }]}>{previewSection.subtitle}</Text>
+                                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Type: {previewSection.type}</Text>
+                                {previewSection.type === 'DYNAMIC' && <Text style={{ fontSize: 12, color: colors.textSecondary }}>Criteria: {previewSection.criteria}</Text>}
+                            </View>
                         )}
+
                         <TouchableOpacity 
                             style={[styles.donePreview, { backgroundColor: colors.primary }]}
                             onPress={() => setIsPreviewVisible(false)}
                         >
-                            <Text style={{ color: 'white', fontWeight: '800' }}>CLOSE PREVIEW</Text>
+                            <Text style={{ color: 'white', fontWeight: '800' }}>CLOSE</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -335,8 +438,8 @@ const styles = StyleSheet.create({
     card: { borderRadius: 24, padding: 20, marginBottom: 20, ...SHADOWS.medium },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     headerInfo: { flex: 1 },
-    editForm: { flex: 1, gap: 8 },
-    input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, fontSize: 14 },
+    editForm: { flex: 1, gap: 12 },
+    input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14 },
     collectionTitle: { ...TYPOGRAPHY.h3, fontSize: 18, marginBottom: 4 },
     collectionSubtitle: { fontSize: 12 },
     headerActions: { marginLeft: 16 },
@@ -370,6 +473,17 @@ const styles = StyleSheet.create({
     footerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
     footerBtnText: { fontSize: 14, fontWeight: '800' },
     
+    // Type and Criteria selectors
+    typeSelector: { flexDirection: 'row', gap: 8, marginTop: 4 },
+    typeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: '#CBD5E1' },
+    typeBtnText: { fontSize: 12, fontWeight: '700' },
+    criteriaList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+    criteriaBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
+    criteriaBtnText: { fontSize: 10, fontWeight: '800' },
+
+    badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+    badgeText: { fontSize: 10, fontWeight: '800' },
+
     // Modals
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
     modalContent: { height: '80%', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24 },

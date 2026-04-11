@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { SHADOWS, SIZES, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import { formatRelativeTime } from '../utils/date';
 
 const { width, height } = Dimensions.get('window');
 const STORY_DURATION = 5000; // 5 seconds per story
@@ -151,7 +152,7 @@ const StoryViewerScreen = ({ route, navigation }: any) => {
                         <Image source={{ uri: storyGroup.avatar }} style={styles.avatar} />
                         <View style={styles.textContainer}>
                             <Text style={styles.username}>{storyGroup.restaurantName || storyGroup.name}</Text>
-                            <Text style={styles.timestamp}>{currentStory.timestamp || 'Just now'}</Text>
+                            <Text style={styles.timestamp}>{formatRelativeTime(currentStory.createdAt)}</Text>
                         </View>
                     </View>
 
@@ -168,10 +169,18 @@ const StoryViewerScreen = ({ route, navigation }: any) => {
                         {currentStory.text}
                     </Text>
                     {/* Placeholder for future "See Menu" or "Book table" button */}
-                    <View style={styles.ctaButton}>
+                    <TouchableOpacity 
+                        style={styles.ctaButton}
+                        onPress={() => {
+                            const restaurantId = storyGroup.restaurantId || storyGroup.id;
+                            if (restaurantId) {
+                                navigation.navigate('RestaurantDetail', { id: restaurantId });
+                            }
+                        }}
+                    >
                         <Text style={styles.ctaText}>See Details</Text>
                         <ChevronRight size={16} color="#FFFFFF" />
-                    </View>
+                    </TouchableOpacity>
                 </View>
             )}
         </View>

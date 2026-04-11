@@ -19,6 +19,7 @@ import StarRating from './StarRating';
 import { RestaurantDTO } from '../types/dto';
 import { useTheme } from '../context/ThemeContext';
 import { useRestaurant } from '../context/RestaurantContext';
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
@@ -30,10 +31,16 @@ interface RestaurantCardProps {
 
 const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onPress }) => {
     const { colors } = useTheme();
-    const { isFollowing, followRestaurant, unfollowRestaurant, addPoints } = useRestaurant();
+    const { 
+        isLiked, 
+        likeRestaurant, 
+        unlikeRestaurant, 
+        addPoints 
+    } = useRestaurant();
+    const { role } = useAuth();
     const [activeIndex, setActiveIndex] = useState(0);
-    const isFollowed = isFollowing(restaurant.id);
-    const [likeCount, setLikeCount] = useState(restaurant.followers ?? 0);
+    const liked = isLiked(restaurant.id);
+    const [likeCount, setLikeCount] = useState(restaurant.likes ?? 0);
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const flatListRef = useRef<FlatList>(null);
 
@@ -46,21 +53,30 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onPress }) 
         setActiveIndex(index);
     }, []);
 
-    const handleFollow = useCallback(() => {
+    const handleLike = useCallback(() => {
+        if (role === 'GUEST') {
+            Alert.alert(
+                'Sign In Required',
+                'Please sign in to like restaurants!',
+                [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign In', onPress: () => {} }]
+            );
+            return;
+        }
+
         // Bounce animation
         Animated.sequence([
             Animated.spring(scaleAnim, { toValue: 1.35, useNativeDriver: true, speed: 40 }),
             Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 40 }),
         ]).start();
 
-        if (isFollowed) {
-            unfollowRestaurant(restaurant.id);
-            setLikeCount(c => c - 1);
+        if (liked) {
+            unlikeRestaurant(restaurant.id);
+            setLikeCount(c => Math.max(0, c - 1));
         } else {
-            followRestaurant(restaurant.id);
+            likeRestaurant(restaurant.id);
             setLikeCount(c => c + 1);
         }
-    }, [scaleAnim, isFollowed, restaurant.id]);
+    }, [scaleAnim, liked, restaurant.id, role]);
 
     const handleShare = useCallback(async () => {
         try {
@@ -172,26 +188,26 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onPress }) 
                             <Share2 size={15} color={colors.primary} />
                         </TouchableOpacity>
 
-                        {/* Follow */}
+                        {/* Like */}
                         <TouchableOpacity
                             style={[
                                 styles.actionBtn,
-                                { backgroundColor: isFollowed ? '#FF4D6D20' : colors.primary + '10' },
+                                { backgroundColor: liked ? '#FF4D6D20' : colors.primary + '10' },
                             ]}
-                            onPress={handleFollow}
+                            onPress={handleLike}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                                 <Heart
                                     size={15}
-                                    color={isFollowed ? '#FF4D6D' : colors.primary}
-                                    fill={isFollowed ? '#FF4D6D' : 'none'}
+                                    color={liked ? '#FF4D6D' : colors.primary}
+                                    fill={liked ? '#FF4D6D' : 'none'}
                                 />
                             </Animated.View>
                             <Text
                                 style={[
                                     styles.likeCount,
-                                    { color: isFollowed ? '#FF4D6D' : colors.textSecondary },
+                                    { color: liked ? '#FF4D6D' : colors.textSecondary },
                                 ]}
                             >
                                 {likeCount}

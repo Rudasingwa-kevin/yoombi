@@ -416,6 +416,12 @@ export const restaurantService = {
     unfollow(id: string) {
         return api.delete<void>(`/restaurants/${id}/follow`);
     },
+    like(id: string) {
+        return api.post<void>(`/restaurants/${id}/like`);
+    },
+    unlike(id: string) {
+        return api.delete<void>(`/restaurants/${id}/like`);
+    },
     approve(id: string) {
         return api.patch<RestaurantDTO>(`/admin/restaurants/${id}/approve`);
     },
@@ -606,4 +612,24 @@ export const articleService = {
     create: (data: Partial<ArticleDTO>) => api.post<ArticleDTO>('/articles', data),
     update: (id: string, data: Partial<ArticleDTO>) => api.patch<ArticleDTO>(`/articles/${id}`, data),
     delete: (id: string) => api.delete<void>(`/articles/${id}`),
+};
+
+export const cmsService = {
+    /** Public: Get active sections with resolved restaurants */
+    getActiveSections() {
+        return api.get<HomepageSectionDTO[]>('/cms');
+    },
+    /** Admin: Get all sections */
+    getAdminSections() {
+        return api.get<HomepageSectionDTO[]>('/cms/admin');
+    },
+    createSection(data: CreateHomepageSectionDTO) {
+        return api.post<HomepageSectionDTO>('/cms', data);
+    },
+    updateSection(id: string, data: Partial<CreateHomepageSectionDTO>) {
+        return api.patch<HomepageSectionDTO>(/cms/ + id, data);
+    },
+    deleteSection(id: string) {
+        return api.delete(/cms/ + id);
+    },
 };

@@ -202,7 +202,8 @@ router.get('/me', authenticateToken, async (req: any, res: Response) => {
       where: { id: req.user.id },
       include: {
         ownedRestaurant: true,
-        following: true
+        following: true,
+        likes: true
       } as any
     });
 
@@ -215,7 +216,8 @@ router.get('/me', authenticateToken, async (req: any, res: Response) => {
       data: {
         ...formatUser(user),
         loyaltyPoints: (user as any).loyaltyPoints,
-        following: (user as any).following.map((f: any) => f.restaurantId)
+        following: (user as any).following.map((f: any) => f.restaurantId),
+        likedRestaurants: (user as any).likes.map((l: any) => l.restaurantId)
       }
     });
   } catch (error) {

@@ -56,6 +56,7 @@ export interface UserDTO {
     isBlocked: boolean;
     loyaltyPoints: number;
     following: string[];   // Array of restaurant IDs
+    likedRestaurants: string[];
     restaurantId?: string; // Populated for OWNER role
     createdAt: string;     // ISO date string
     updatedAt: string;
@@ -151,9 +152,8 @@ export interface RestaurantDTO {
     rating: number;
     reviewCount: number;
     totalReviews?: number; // Optional until schema is fully aligned
-    latitude: number;
-    longitude: number;
     location: LocationDTO;
+    likes: number;
     followers: number;
     vibe?: string;
     dressCode?: string;
@@ -168,6 +168,29 @@ export interface RestaurantDTO {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface HomepageSectionDTO {
+    id: string;
+    title: string;
+    subtitle?: string;
+    type: 'DYNAMIC' | 'MANUAL';
+    criteria?: 'TOP_RATED' | 'NEW_COMERS' | 'EXCLUSIVE';
+    restaurantIds: string[];
+    order: number;
+    active: boolean;
+    restaurants?: RestaurantDTO[];
+}
+
+export interface CreateHomepageSectionDTO {
+    title: string;
+    subtitle?: string;
+    type?: 'DYNAMIC' | 'MANUAL';
+    criteria?: 'TOP_RATED' | 'NEW_COMERS' | 'EXCLUSIVE';
+    restaurantIds?: string[];
+    order?: number;
+    active?: boolean;
+}
+
 
 /** POST /restaurants — Create restaurant request */
 export interface CreateRestaurantRequestDTO {
@@ -184,7 +207,9 @@ export interface CreateRestaurantRequestDTO {
 }
 
 /** PATCH /restaurants/:id — Update restaurant request */
-export type UpdateRestaurantRequestDTO = Partial<CreateRestaurantRequestDTO>;
+export type UpdateRestaurantRequestDTO = Partial<CreateRestaurantRequestDTO> & {
+    isTrending?: boolean;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Menu DTOs

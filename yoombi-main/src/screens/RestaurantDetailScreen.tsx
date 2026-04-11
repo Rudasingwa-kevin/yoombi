@@ -31,7 +31,15 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
     const { role } = useAuth();
     const { colors, isDark } = useTheme();
     const { id } = route.params;
-    const { followRestaurant, unfollowRestaurant, isFollowing, checkIn } = useRestaurant();
+    const { 
+        isFollowing, 
+        followRestaurant, 
+        unfollowRestaurant, 
+        isLiked,
+        likeRestaurant,
+        unlikeRestaurant,
+        checkIn
+    } = useRestaurant();
 
     // Data state
     const [restaurant, setRestaurant] = useState<RestaurantDTO | null>(null);
@@ -41,8 +49,13 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
 
     // Local state for carousel and interaction
     const [activeIndex, setActiveIndex] = useState(0);
-    const [liked, setLiked] = useState(false);
-    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const [liked, setLiked] = useState(isLiked(id));
+    const heartAnim = useRef(new Animated.Value(1)).current;
+
+    // Sync local liked state when context changes
+    useEffect(() => {
+        setLiked(isLiked(id));
+    }, [isLiked(id)]);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -69,6 +82,15 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
     const isFollowed = isFollowing(id);
 
     const handleFollowToggle = () => {
+        if (role === 'GUEST') {
+            Alert.alert(
+                'Sign In Required',
+                'Please sign in to follow restaurants and stay updated!',
+                [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign In', onPress: () => {} }]
+            );
+            return;
+        }
+
         if (isFollowed) {
             unfollowRestaurant(id);
         } else {
@@ -81,14 +103,30 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
         setActiveIndex(index);
     }, []);
 
-    const handleLike = useCallback(() => {
-        Animated.sequence([
-            Animated.spring(scaleAnim, { toValue: 1.35, useNativeDriver: true, speed: 40 }),
-            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 40 }),
-        ]).start();
+    const handleLike = () => {
+        if (role === 'GUEST') {
+            Alert.alert(
+                'Sign In Required',
+                'Please sign in to like restaurants and save them to your profile!',
+                [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign In', onPress: () => {} }]
+            );
+            return;
+        }
 
-        setLiked(prev => !prev);
-    }, [scaleAnim]);
+        if (liked) {
+            unlikeRestaurant(id);
+            setLiked(false);
+        } else {
+            likeRestaurant(id);
+            setLiked(true);
+            heartAnim.setValue(0.8);
+            Animated.spring(heartAnim, {
+                toValue: 1,
+                friction: 3,
+                useNativeDriver: true,
+            }).start();
+        }
+    };
 
     const handleShare = useCallback(async () => {
         if (!restaurant) return;
@@ -200,7 +238,7 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
                                 style={styles.iconCircle}
                                 onPress={handleLike}
                             >
-                                <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                                <Animated.View style={{ transform: [{ scale: heartAnim }] }}>
                                     <Heart
                                         color={liked ? '#FF4D6D' : colors.primary}
                                         size={20}

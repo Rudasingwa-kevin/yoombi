@@ -12,6 +12,7 @@ import uploadRoutes from './routes/upload';
 import adminRoutes from './routes/admin';
 import notificationRoutes from './routes/notification';
 import analyticsRoutes from './routes/analytics';
+import cmsRoutes from './routes/cms';
 import { authenticateToken, authorizeRole } from './middleware/auth';
 import { PORT } from './config/env';
 
@@ -40,6 +41,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/cms', cmsRoutes);
 
 // Basic health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {

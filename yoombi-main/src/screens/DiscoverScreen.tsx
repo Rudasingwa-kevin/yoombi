@@ -9,9 +9,9 @@ import CuratedCollection from '../components/CuratedCollection';
 import { RestaurantCardSkeleton } from '../components/SkeletonLoader';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { restaurantService } from '../services/api';
+import { restaurantService, cmsService } from '../services/api';
 
-import { RestaurantDTO } from '../types/dto';
+import { RestaurantDTO, HomepageSectionDTO } from '../types/dto';
 import AuthRequirementModal from '../components/AuthRequirementModal';
 import { RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -62,18 +62,25 @@ const DiscoverScreen = ({ navigation }: any) => {
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
+    const [homepageSections, setHomepageSections] = useState<HomepageSectionDTO[]>([]);
 
 
     const fetchRestaurants = async () => {
         setIsLoading(true);
         try {
-            const response = await restaurantService.getAll({
-                search: searchQuery || undefined,
-                vibe: vibe || undefined,
-                dressCode: dressCode || undefined,
-                isMichelin: isMichelin || undefined
-            });
-            setRestaurants(response);
+            // Fetch both restaurants and CMS sections
+            const [restResponse, cmsResponse] = await Promise.all([
+                restaurantService.getAll({
+                    search: searchQuery || undefined,
+                    vibe: vibe || undefined,
+                    dressCode: dressCode || undefined,
+                    isMichelin: isMichelin || undefined
+                }),
+                cmsService.getActiveSections()
+            ]);
+            
+            setRestaurants(restResponse);
+            setHomepageSections(cmsResponse || []);
         } catch (error) {
             console.error('[DiscoverScreen] Fetch error:', error);
             setRestaurants([]);
@@ -133,21 +140,8 @@ const DiscoverScreen = ({ navigation }: any) => {
         }
     }, [vibe, dressCode, isMichelin, isLoading]);
 
-    // Derive curated collections from real restaurants
-    const curatedCollections = useMemo(() => [
-        {
-            id: 'c1',
-            title: 'Top Rated',
-            subtitle: 'Highest rated this month',
-            restaurants: [...restaurants].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 6),
-        },
-        {
-            id: 'c2',
-            title: 'Luxury Dining',
-            subtitle: 'Fine dining experiences',
-            restaurants: restaurants.filter((r: any) => r.isMichelin || r.vibe === 'Elegant').slice(0, 6),
-        },
-    ], [restaurants]);
+    // Derivative curated collections are now handled by homepageSections from backend
+    // No longer using hardcoded useMemo logic for collections
 
 
 
@@ -326,12 +320,12 @@ const DiscoverScreen = ({ navigation }: any) => {
 
                         {!searchQuery && !isLoading && (
                             <>
-                                {curatedCollections.filter(c => c.restaurants.length > 0).map((collection) => (
+                                {homepageSections.map((collection) => (
                                     <CuratedCollection
                                         key={collection.id}
                                         title={collection.title}
                                         subtitle={collection.subtitle}
-                                        data={collection.restaurants as any[]}
+                                        data={collection.restaurants || []}
                                         onPressItem={(id) => {
                                             if (isGuest) {
                                                 setIsAuthModalVisible(true);

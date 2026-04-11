@@ -32,6 +32,9 @@ interface RestaurantContextType {
     followRestaurant: (id: string) => void;
     unfollowRestaurant: (id: string) => void;
     isFollowing: (id: string) => boolean;
+    likeRestaurant: (id: string) => void;
+    unlikeRestaurant: (id: string) => void;
+    isLiked: (id: string) => boolean;
     loyaltyPoints: number;
     getUserTier: () => 'Emerald' | 'Gold' | 'Sapphire' | 'Black Diamond';
     addPoints: (amount: number) => void;
@@ -52,6 +55,7 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
     const [followedRestaurants, setFollowedRestaurants] = useState<string[]>([]);
+    const [likedRestaurants, setLikedRestaurants] = useState<string[]>([]);
     const [loyaltyPoints, setLoyaltyPoints] = useState(0);
 
     // ── Fetch user profile data (points, following) ───────────────────────────
@@ -60,6 +64,7 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
             const data = await authService.getMe();
             setLoyaltyPoints(data.loyaltyPoints || 0);
             setFollowedRestaurants(data.following || []);
+            setLikedRestaurants(data.likedRestaurants || []);
         } catch (e) {
             console.warn('[RestaurantContext] Could not fetch user profile:', e);
             // Default points for guest/dev
@@ -118,6 +123,7 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribeSignOut = onSignOut(() => {
             setCurrentRestaurant(null);
             setFollowedRestaurants([]);
+            setLikedRestaurants([]);
             setLoyaltyPoints(0);
         });
 
@@ -308,6 +314,25 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
 
     const isFollowing = (id: string) => followedRestaurants.includes(id);
 
+    // ── Liking ────────────────────────────────────────────────────────────────
+    const likeRestaurant = (id: string) => {
+        setLikedRestaurants(prev => {
+            if (!prev.includes(id)) {
+                addPoints(2);
+                restaurantService.like(id).catch(() => {});
+                return [...prev, id];
+            }
+            return prev;
+        });
+    };
+
+    const unlikeRestaurant = (id: string) => {
+        setLikedRestaurants(prev => prev.filter(rId => rId !== id));
+        restaurantService.unlike(id).catch(() => {});
+    };
+
+    const isLiked = (id: string) => likedRestaurants.includes(id);
+
     return (
         <RestaurantContext.Provider
             value={{
@@ -324,6 +349,9 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
                 followRestaurant,
                 unfollowRestaurant,
                 isFollowing,
+                likeRestaurant,
+                unlikeRestaurant,
+                isLiked,
                 loyaltyPoints,
                 getUserTier,
                 addPoints,

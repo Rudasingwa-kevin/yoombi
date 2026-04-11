@@ -34,15 +34,11 @@ const TrendingScreen = ({ navigation }: any) => {
             setStories(storyRes || []);
             setArticles(articleRes || []);
             
-            // Extract the restaurant array and sort by trending first, then rating descending
-            const rawRestaurants = restRes;
-            const sortedRestaurants = [...rawRestaurants].sort((a, b) => {
-                // Pin trending restaurants to the top
-                if (a.isTrending && !b.isTrending) return -1;
-                if (!a.isTrending && b.isTrending) return 1;
-                // Otherwise sort by rating
-                return (b.rating || 0) - (a.rating || 0);
-            });
+            // Only show restaurants that are explicitly marked as trending
+            const sortedRestaurants = (restRes || [])
+                .filter((r: RestaurantDTO) => r.isTrending)
+                .sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                
             setTrendingRestaurants(sortedRestaurants);
         } catch (error) {
             console.error('[TrendingScreen] Fetch error:', error);
@@ -152,7 +148,7 @@ const TrendingScreen = ({ navigation }: any) => {
             </View>
 
             <View style={styles.sectionHeader}>
-                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Most Popular</Text>
+                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Trending Now</Text>
             </View>
         </>
     ), [colors, isDark, renderBlogCard, stories, articles, isLoading, navigation]);

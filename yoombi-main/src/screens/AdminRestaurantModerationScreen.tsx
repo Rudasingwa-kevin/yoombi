@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { ChevronLeft, Store, CheckCircle, XCircle, Info, Calendar, User, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, Store, CheckCircle, XCircle, Info, Calendar, User, Trash2, Flame } from 'lucide-react-native';
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import { restaurantService, adminService } from '../services/api';
 import { RestaurantDTO } from '../types/dto';
@@ -114,6 +114,19 @@ const AdminRestaurantModerationScreen = ({ navigation }: any) => {
         );
     };
 
+    const handleToggleTrending = async (id: string, name: string, currentStatus: boolean) => {
+        try {
+            await restaurantService.update(id, { isTrending: !currentStatus });
+            Alert.alert(
+                !currentStatus ? 'Trending Status Enabled' : 'Trending Status Disabled',
+                `"${name}" is now ${!currentStatus ? 'trending' : 'no longer trending'}.`
+            );
+            fetchRestaurants();
+        } catch (e) {
+            Alert.alert('Error', 'Failed to update trending status.');
+        }
+    };
+
     const renderPendingItem = ({ item }: { item: RestaurantDTO }) => (
         <View style={[styles.card, { backgroundColor: colors.white, shadowColor: colors.shadow }]}>
             <View style={styles.cardHeader}>
@@ -168,7 +181,28 @@ const AdminRestaurantModerationScreen = ({ navigation }: any) => {
                         onPress={() => handleManage(item.id, item.name)}
                     >
                         <User color={isDark ? colors.primary : colors.white} size={20} />
-                        <Text style={[styles.manageBtnText, { color: isDark ? colors.primary : colors.white }]}>Manage Restaurant Actions</Text>
+                        <Text style={[styles.manageBtnText, { color: isDark ? colors.primary : colors.white }]}>Manage</Text>
+                    </TouchableOpacity>
+                )}
+                
+                {item.isApproved && (
+                    <TouchableOpacity 
+                        style={[
+                            styles.trendingToggleBtn, 
+                            { 
+                                backgroundColor: item.isTrending ? '#FF9F1C' : colors.primary + '10',
+                                borderColor: item.isTrending ? '#FF9F1C' : colors.primary + '30'
+                            }
+                        ]} 
+                        onPress={() => handleToggleTrending(item.id, item.name, !!item.isTrending)}
+                    >
+                        <Flame color={item.isTrending ? colors.white : colors.primary} size={20} />
+                        <Text style={[
+                            styles.trendingText, 
+                            { color: item.isTrending ? colors.white : colors.primary }
+                        ]}>
+                            {item.isTrending ? 'Trending' : 'Boost'}
+                        </Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -371,6 +405,21 @@ const styles = StyleSheet.create({
     manageBtnText: {
         fontWeight: '700',
         fontSize: 15,
+    },
+    trendingToggleBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        borderRadius: 16,
+        borderWidth: 1,
+        ...SHADOWS.light,
+    },
+    trendingText: {
+        fontWeight: '700',
+        fontSize: 14,
     },
 });
 
