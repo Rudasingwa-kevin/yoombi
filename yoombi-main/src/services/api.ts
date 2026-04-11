@@ -331,6 +331,8 @@ import type {
     StoryItemDTO,
     PaginatedResponse as PaginatedResponseType,
     ArticleDTO,
+    HomepageSectionDTO,
+    CreateHomepageSectionDTO,
 } from '../types/dto';
 
 // ── Auth Service ─────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 
@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
  * GET /api/restaurants
  * Returns a list of all restaurants
  */
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const { city, cuisine, search, vibe, dressCode, isMichelin, isTrending } = req.query;
         const where: any = { AND: [] };
@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
         });
 
         // Map to include totalReviews/followers count from _count
-        const formatted = restaurants.map(r => ({
+        const formatted = restaurants.map((r: any) => ({
             ...r,
             totalReviews: r._count.reviews,
             followers: r._count.followers,
@@ -106,7 +106,7 @@ router.get('/mine', authenticateToken, async (req: AuthRequest, res: Response) =
  * GET /api/restaurants/:id
  * Returns a single restaurant detail
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const restaurant = await prisma.restaurant.findUnique({
@@ -141,7 +141,7 @@ router.get('/:id', async (req, res) => {
  * GET /api/restaurants/:id/menu
  * Returns menu items for a restaurant
  */
-router.get('/:id/menu', async (req, res) => {
+router.get('/:id/menu', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const menuItems = await prisma.menuItem.findMany({
@@ -159,7 +159,7 @@ router.get('/:id/menu', async (req, res) => {
  * GET /api/restaurants/:id/reviews
  * Returns (paginated) reviews for a restaurant
  */
-router.get('/:id/reviews', async (req, res) => {
+router.get('/:id/reviews', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = parseInt(req.query.page as string) || 1;
@@ -177,7 +177,7 @@ router.get('/:id/reviews', async (req, res) => {
             prisma.review.count({ where: { restaurantId: id } })
         ]);
 
-        const formatted = reviews.map(r => ({
+        const formatted = reviews.map((r: any) => ({
             id: r.id,
             rating: r.rating,
             comment: r.text,
@@ -384,7 +384,7 @@ router.delete('/:id/images', authenticateToken, async (req: AuthRequest, res: Re
             return res.status(403).json({ success: false, message: 'Unauthorized' });
         }
 
-        const newImages = restaurant.images.filter(img => img !== imageUrl);
+        const newImages = restaurant.images.filter((img: string) => img !== imageUrl);
         await prisma.restaurant.update({
             where: { id },
             data: { images: newImages }

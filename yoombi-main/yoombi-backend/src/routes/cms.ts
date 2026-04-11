@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest, authorizeRole } from '../middleware/auth';
 
@@ -9,14 +9,14 @@ const prisma = new PrismaClient();
  * GET /api/cms
  * Public endpoint to fetch active homepage sections with resolved restaurant data
  */
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const sections = await prisma.homepageSection.findMany({
             where: { active: true },
             orderBy: { order: 'asc' }
         });
 
-        const resolvedSections = await Promise.all(sections.map(async (section) => {
+        const resolvedSections = await Promise.all(sections.map(async (section: any) => {
             let restaurants: any[] = [];
 
             if (section.type === 'DYNAMIC') {
@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
                 // Sort manual restaurants to match the order in restaurantIds array if possible
                 const restaurantMap = new Map(restaurants.map(r => [r.id, r]));
                 restaurants = section.restaurantIds
-                    .map(id => restaurantMap.get(id))
+                    .map((id: string) => restaurantMap.get(id))
                     .filter(Boolean);
             }
 
@@ -75,7 +75,7 @@ router.get('/', async (req, res) => {
  * GET /api/cms/admin
  * Admin endpoint to fetch all sections (including inactive ones)
  */
-router.get('/admin', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+router.get('/admin', authenticateToken, authorizeRole(['ADMIN']), async (req: Request, res: Response) => {
     try {
         const sections = await prisma.homepageSection.findMany({
             orderBy: { order: 'asc' }
@@ -90,7 +90,7 @@ router.get('/admin', authenticateToken, authorizeRole(['ADMIN']), async (req, re
  * POST /api/cms
  * Create a new homepage section
  */
-router.post('/', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+router.post('/', authenticateToken, authorizeRole(['ADMIN']), async (req: Request, res: Response) => {
     try {
         const { title, subtitle, type, criteria, restaurantIds, order, active } = req.body;
         
@@ -117,7 +117,7 @@ router.post('/', authenticateToken, authorizeRole(['ADMIN']), async (req, res) =
  * PATCH /api/cms/:id
  * Update a homepage section
  */
-router.patch('/:id', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+router.patch('/:id', authenticateToken, authorizeRole(['ADMIN']), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const data = req.body;
@@ -137,7 +137,7 @@ router.patch('/:id', authenticateToken, authorizeRole(['ADMIN']), async (req, re
  * DELETE /api/cms/:id
  * Delete a homepage section
  */
-router.delete('/:id', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+router.delete('/:id', authenticateToken, authorizeRole(['ADMIN']), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         await prisma.homepageSection.delete({ where: { id } });
