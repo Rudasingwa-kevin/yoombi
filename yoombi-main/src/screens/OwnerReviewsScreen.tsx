@@ -29,9 +29,9 @@ const OwnerReviewsScreen = ({ navigation }: any) => {
             const response = await reviewService.getForRestaurant(currentRestaurant.id, pageNum);
             
             if (isRefresh || pageNum === 1) {
-                setReviews(response.data);
+                setReviews(response.data || []);
             } else {
-                setReviews(prev => [...prev, ...response.data]);
+                setReviews(prev => [...prev, ...(response.data || [])]);
             }
             
             setHasMore(response.meta.page < response.meta.totalPages);
@@ -73,9 +73,9 @@ const OwnerReviewsScreen = ({ navigation }: any) => {
     };
 
     // Filter reviews based on search and rating
-    const filteredReviews = reviews.filter(review => {
-        const matchesSearch = review.comment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            review.userName.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredReviews = (reviews || []).filter(review => {
+        const matchesSearch = (review.comment || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (review.userName || '').toLowerCase().includes(searchQuery.toLowerCase());
         const matchesRating = filterRating ? review.rating === filterRating : true;
         return matchesSearch && matchesRating;
     });

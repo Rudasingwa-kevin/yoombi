@@ -230,8 +230,8 @@ async function request<T>(
         );
     }
 
-    // Unwrap { success, data } envelope if present
-    if ('data' in json && 'success' in json) {
+    // Unwrap { success, data } envelope if present, but preserve if it's a paginated response (has meta)
+    if ('data' in json && 'success' in json && !('meta' in json)) {
         return json.data as T;
     }
 

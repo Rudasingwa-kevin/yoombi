@@ -280,7 +280,7 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
                                     <View key={item.id} style={styles.menuItem}>
                                         <View>
                                             <Text style={[styles.menuItemName, { color: colors.text }]}>{item.name}</Text>
-                                            <Text style={[styles.menuItemPrice, { color: colors.secondary }]}>{item.price?.toLocaleString() || '0'} RWF</Text>
+                                            <Text style={[styles.menuItemPrice, { color: colors.secondary }]}>{item.price ? `${item.price.toLocaleString()} RWF` : 'Price on inquiry'}</Text>
 
                                         </View>
                                     </View>

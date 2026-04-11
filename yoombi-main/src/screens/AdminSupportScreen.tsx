@@ -25,7 +25,7 @@ const AdminSupportScreen = ({ navigation }: any) => {
 
     useEffect(() => {
         supportService.getTickets(1)
-            .then(res => setTickets(res.data || (res as any) || []))
+            .then(res => setTickets(res.data || []))
             .catch(e => console.warn('[AdminSupport] Failed to fetch tickets:', e));
     }, []);
 
@@ -39,8 +39,8 @@ const AdminSupportScreen = ({ navigation }: any) => {
                     text: 'Resolve',
                     onPress: async () => {
                         try {
-                            await supportService.updateTicketStatus(id, 'SOLVED');
-                            setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'SOLVED' } : t));
+                            await supportService.updateTicketStatus(id, 'RESOLVED');
+                            setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'RESOLVED' } : t));
                             setSelectedTicket(null);
                         } catch (e) { Alert.alert('Error', 'Failed to update ticket.'); }
                     }
@@ -126,7 +126,7 @@ const AdminSupportScreen = ({ navigation }: any) => {
                         </TouchableOpacity>
                         <Text style={[TYPOGRAPHY.h2, { color: colors.primary }]}>Ticket Details</Text>
                         <TouchableOpacity onPress={() => handleSolveTicket(selectedTicket.id)}>
-                            <CheckCircle color={selectedTicket.status === 'SOLVED' ? '#10B981' : colors.textSecondary} size={24} />
+                            <CheckCircle color={selectedTicket.status === 'RESOLVED' ? '#10B981' : colors.textSecondary} size={24} />
                         </TouchableOpacity>
                     </View>
 

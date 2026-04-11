@@ -11,8 +11,8 @@ export interface MenuItem {
     id: string;
     name: string;
     description: string;
-    price: string;       // formatted string for display, e.g. "15,000 RWF"
-    priceRaw: number;    // raw integer in RWF for API
+    price: string | null;       // formatted string for display, e.g. "15,000 RWF"
+    priceRaw: number | null;    // raw integer in RWF for API
     category: string;
     image?: string;
     available: boolean;
@@ -89,7 +89,7 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
                     id: item.id,
                     name: item.name,
                     description: item.description,
-                    price: `${(item.price ?? 0).toLocaleString()} RWF`,
+                    price: item.price ? `${(item.price).toLocaleString()} RWF` : null,
                     priceRaw: item.price,
                     category: item.category,
                     image: item.image,
@@ -197,7 +197,7 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
                 id: newItemDTO.id,
                 name: newItemDTO.name,
                 description: newItemDTO.description,
-                price: `${(newItemDTO.price ?? 0).toLocaleString()} RWF`,
+                price: newItemDTO.price ? `${(newItemDTO.price).toLocaleString()} RWF` : null,
                 priceRaw: newItemDTO.price,
                 category: newItemDTO.category,
                 image: newItemDTO.image,
@@ -228,8 +228,8 @@ export const RestaurantProvider = ({ children }: { children: ReactNode }) => {
             setMenuItems(prev => prev.map(item => item.id === id ? {
                 ...item,
                 ...updates,
-                price: updatedItemDTO.price !== undefined ? `${updatedItemDTO.price.toLocaleString()} RWF` : item.price,
-                priceRaw: updatedItemDTO.price ?? item.priceRaw,
+                price: updatedItemDTO.price ? `${updatedItemDTO.price.toLocaleString()} RWF` : (updatedItemDTO.price === null ? null : item.price),
+                priceRaw: updatedItemDTO.price !== undefined ? updatedItemDTO.price : item.priceRaw,
             } : item));
         } catch (error) {
             console.error('[RestaurantContext] Failed to update menu item:', error);

@@ -195,7 +195,7 @@ export interface MenuItemDTO {
     restaurantId: string;
     name: string;
     description: string;
-    price: number; // in RWF (raw integer, not formatted string)
+    price: number | null; // in RWF (raw integer, not formatted string)
     category: string;
     image?: string;
     available: boolean;
@@ -206,7 +206,7 @@ export interface MenuItemDTO {
 export interface CreateMenuItemRequestDTO {
     name: string;
     description: string;
-    price: number;
+    price?: number | null;
     category: string;
     image?: string;
     available: boolean;

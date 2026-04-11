@@ -81,7 +81,7 @@ model MenuItem {
   id           String   @id @default(uuid())
   name         String
   description  String
-  priceRaw     Int
+  priceRaw     Int?
   category     String
   image        String?
   available    Boolean  @default(true)

@@ -41,7 +41,7 @@ const MenuManagementScreen = ({ navigation }: any) => {
                 id: item.id,
                 name: item.name,
                 description: item.description,
-                price: `RWF ${item.price.toLocaleString()}`,
+                price: item.price ? `RWF ${item.price.toLocaleString()}` : null,
                 category: item.category,
                 image: item.imageUrl,
                 available: item.available
@@ -78,14 +78,14 @@ const MenuManagementScreen = ({ navigation }: any) => {
     };
 
     const handleSave = async () => {
-        if (!formData.name || !formData.price) {
-            Alert.alert('Missing fields', 'Please fill in at least name and price.');
+        if (!formData.name) {
+            Alert.alert('Missing field', 'Please provide at least an item name.');
             return;
         }
 
         // Extract numbers from price string for the raw value
         const numericPrice = formData.price.replace(/[^0-9]/g, '');
-        const priceRaw = parseInt(numericPrice, 10) || 0;
+        const priceRaw = numericPrice ? parseInt(numericPrice, 10) : null;
 
         setIsSaving(true);
         try {
@@ -134,7 +134,7 @@ const MenuManagementScreen = ({ navigation }: any) => {
         setFormData({
             name: item.name,
             description: item.description,
-            price: item.price,
+            price: item.price || '',
             category: item.category,
             image: item.image || '',
             available: item.available,
@@ -228,7 +228,7 @@ const MenuManagementScreen = ({ navigation }: any) => {
 
                         <TextInput
                             style={[styles.input, { backgroundColor: colors.background, color: colors.text }]}
-                            placeholder="Price (e.g., 15,000 RWF)"
+                            placeholder="Price (optional, e.g., 15,000 RWF)"
                             placeholderTextColor={colors.textSecondary}
                             value={formData.price}
                             onChangeText={(text) => setFormData({ ...formData, price: text })}
@@ -287,7 +287,7 @@ const MenuManagementScreen = ({ navigation }: any) => {
                                 </Text>
                             )}
                             <View style={styles.itemFooter}>
-                                <Text style={[styles.itemPrice, { color: colors.secondary }]}>{item.price}</Text>
+                                <Text style={[styles.itemPrice, { color: colors.secondary }]}>{item.price || 'Price on inquiry'}</Text>
                                 <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
                                     <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>{item.category}</Text>
                                 </View>

@@ -24,7 +24,7 @@ const AdminUserManagementScreen = ({ navigation }: any) => {
 
     useEffect(() => {
         userService.getAll(1, 50)
-            .then(res => setUsers(res.data || (res as any) || []))
+            .then(res => setUsers(res.data || []))
             .catch(e => console.warn('[AdminUserManagement] Failed to fetch users:', e));
     }, []);
 
