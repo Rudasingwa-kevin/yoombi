@@ -27,7 +27,7 @@ const InfoField = ({ icon: Icon, label, value, onChangeText, editable, isEditing
                 onChangeText={onChangeText}
                 editable={isEditing && editable}
                 placeholder={`Enter ${label.toLowerCase()}`}
-                placeholderTextColor={colors.gray}
+                placeholderTextColor={colors.textSecondary}
             />
         </View>
     </View>

@@ -15,7 +15,7 @@ import {
     NativeScrollEvent,
     ActivityIndicator
 } from 'react-native';
-import { ChevronLeft, Share2, Heart, Clock, MapPin, Star, Bell } from 'lucide-react-native';
+import { ChevronLeft, Share2, Heart, Clock, MapPin, Star, UserPlus } from 'lucide-react-native';
 
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import StarRating from '../components/StarRating';
@@ -226,7 +226,7 @@ const RestaurantDetailScreen = ({ route, navigation }: any) => {
                                 ]}
                                 onPress={handleFollowToggle}
                             >
-                                <Bell
+                                <UserPlus
                                     color={isFollowed ? colors.white : colors.primary}
                                     size={20}
                                 />

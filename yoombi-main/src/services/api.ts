@@ -436,6 +436,9 @@ export const restaurantService = {
     deleteImage(id: string, imageUrl: string) {
         return api.delete<void>(`/restaurants/${id}/images`, { imageUrl });
     },
+    getFollowed() {
+        return api.get<RestaurantDTO[]>('/auth/me/following');
+    },
 };
 
 // ── Menu Service ─────────────────────────────────────────────────────────────
@@ -519,8 +522,8 @@ export const userService = {
     changePassword(currentPassword: string, newPassword: string) {
         return api.post<void>('/auth/me/change-password', { currentPassword, newPassword });
     },
-    deleteAccount() {
-        return api.delete<void>('/auth/me');
+    deleteAccount(password: string) {
+        return api.delete<void>('/auth/me', { password });
     },
 };
 

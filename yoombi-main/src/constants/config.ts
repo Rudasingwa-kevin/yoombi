@@ -19,7 +19,7 @@ export const IS_PRODUCTION = false;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Your local backend during development (replace port as needed) */
-const DEV_API_URL = 'http://192.168.1.68:3000/api';
+const DEV_API_URL = 'http://192.168.1.66:3000/api';
 
 /** Your production backend URL */
 const PROD_API_URL = 'https://api.yoombi.rw/api';

@@ -106,7 +106,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
                                 {options.tabBarIcon &&
                                     options.tabBarIcon({
                                         focused: isFocused,
-                                        color: isFocused ? colors.secondary : 'gray',
+                                        color: isFocused ? colors.secondary : colors.textSecondary,
                                         size: 24,
                                     })}
                             </Animated.View>

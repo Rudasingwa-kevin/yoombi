@@ -15,6 +15,7 @@ import ExploreScreen from '../screens/ExploreScreen';
 import TrendingScreen from '../screens/TrendingScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import MyActivityScreen from '../screens/MyActivityScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -36,7 +37,6 @@ import PersonalInformationScreen from '../screens/PersonalInformationScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import ReviewScreen from '../screens/ReviewScreen';
 import FollowersListScreen from '../screens/FollowersListScreen';
-import MyReviewsScreen from '../screens/MyReviewsScreen';
 import HelpSupportScreen from '../screens/HelpSupportScreen';
 import SecurityPrivacyScreen from '../screens/SecurityPrivacyScreen';
 import OwnerReviewsScreen from '../screens/OwnerReviewsScreen';
@@ -53,7 +53,6 @@ import AdminBroadcastScreen from '../screens/AdminBroadcastScreen';
 import AdminAuditLogsScreen from '../screens/AdminAuditLogsScreen';
 import AdminSystemHealthScreen from '../screens/AdminSystemHealthScreen';
 import MaintenanceScreen from '../screens/MaintenanceScreen';
-import ExperienceScreen from '../screens/ExperienceScreen';
 import AnnouncementBanner from '../components/AnnouncementBanner';
 import { useSite } from '../context/SiteContext';
 import { Home } from 'lucide-react-native';
@@ -92,7 +91,7 @@ const UserTabs = () => {
             tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 tabBarActiveTintColor: colors.secondary,
-                tabBarInactiveTintColor: 'gray',
+                tabBarInactiveTintColor: colors.textSecondary,
                 headerShown: false,
             }}
         >
@@ -174,7 +173,7 @@ const OwnerTabs = () => {
             tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 tabBarActiveTintColor: colors.secondary,
-                tabBarInactiveTintColor: 'gray',
+                tabBarInactiveTintColor: colors.textSecondary,
                 headerShown: false,
             }}
         >
@@ -203,7 +202,7 @@ const AdminTabs = () => {
             tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 tabBarActiveTintColor: colors.secondary,
-                tabBarInactiveTintColor: 'gray',
+                tabBarInactiveTintColor: colors.textSecondary,
                 headerShown: false,
             }}
         >
@@ -317,11 +316,10 @@ const AppNavigator = () => {
                                 <Stack.Screen name="ManageRestaurant" component={ManageRestaurantScreen} />
                                 <Stack.Screen name="PersonalInformation" component={PersonalInformationScreen} />
                                 <Stack.Screen name="Notifications" component={NotificationsScreen} />
-                                <Stack.Screen name="Experience" component={ExperienceScreen} />
-                                <Stack.Screen name="MyReviews" component={MyReviewsScreen} />
                                 <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
                                 <Stack.Screen name="SecurityPrivacy" component={SecurityPrivacyScreen} />
                                 <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+                                <Stack.Screen name="MyActivity" component={MyActivityScreen} />
                                 <Stack.Screen name="OwnerStories" component={OwnerStoriesScreen} />
                                 <Stack.Screen name="OwnerReviews" component={OwnerReviewsScreen} />
                             </>

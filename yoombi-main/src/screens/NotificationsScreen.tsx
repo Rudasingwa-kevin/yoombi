@@ -14,7 +14,7 @@ const NotificationItem = ({ icon: Icon, title, description, value, onValueChange
                     <Icon color={colors.primary} size={20} />
                 </View>
                 <View style={styles.itemTextContainer}>
-                    <Text style={[styles.itemTitle, { color: colors.text }]}>{title}</Text>
+                    <Text style={[styles.itemTitle, { color: colors.text, fontWeight: '600' }]}>{title}</Text>
                     <Text style={[styles.itemDescription, { color: colors.textSecondary }]}>{description}</Text>
                 </View>
             </View>
@@ -53,7 +53,7 @@ const InboxCard = ({ notification, onPress }: { notification: NotificationMessag
             <View style={styles.inboxContent}>
                 <View style={styles.inboxHeader}>
                     <Text style={[styles.inboxTitle, { color: colors.text, fontWeight: notification.isRead ? '600' : '800' }]}>{notification.title}</Text>
-                    <Text style={[styles.inboxTime, { color: colors.gray }]}>
+                    <Text style={[styles.inboxTime, { color: colors.textSecondary }]}>
                         {new Date(notification.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                     </Text>
                 </View>
@@ -97,7 +97,7 @@ const NotificationsScreen = ({ navigation }: any) => {
             {notifications.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <View style={[styles.emptyIconBox, { backgroundColor: colors.gray + '10' }]}>
-                        <Bell color={colors.gray} size={40} />
+                        <Bell color={colors.textSecondary} size={40} />
                     </View>
                     <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications yet</Text>
                     <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
@@ -124,7 +124,7 @@ const NotificationsScreen = ({ navigation }: any) => {
     const renderSettings = () => (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.gray }]}>App Notifications</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>App Notifications</Text>
                 <View style={[styles.sectionCard, { backgroundColor: colors.white }]}>
                     <NotificationItem
                         icon={Smartphone}
@@ -151,7 +151,7 @@ const NotificationsScreen = ({ navigation }: any) => {
             </View>
 
             <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.gray }]}>Communication</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Communication</Text>
                 <View style={[styles.sectionCard, { backgroundColor: colors.white }]}>
                     <NotificationItem
                         icon={Mail}
@@ -190,7 +190,7 @@ const NotificationsScreen = ({ navigation }: any) => {
                     style={[styles.tab, activeTab === 'INBOX' && { borderBottomColor: colors.secondary, borderBottomWidth: 3 }]}
                     onPress={() => setActiveTab('INBOX')}
                 >
-                    <Text style={[styles.tabText, { color: activeTab === 'INBOX' ? colors.primary : colors.gray }]}>Inbox</Text>
+                    <Text style={[styles.tabText, { color: activeTab === 'INBOX' ? colors.primary : colors.textSecondary }]}>Inbox</Text>
                     {notifications.filter(n => !n.isRead).length > 0 && (
                         <View style={[styles.badge, { backgroundColor: colors.secondary }]}>
                             <Text style={styles.badgeText}>{notifications.filter(n => !n.isRead).length}</Text>
@@ -201,7 +201,7 @@ const NotificationsScreen = ({ navigation }: any) => {
                     style={[styles.tab, activeTab === 'SETTINGS' && { borderBottomColor: colors.secondary, borderBottomWidth: 3 }]}
                     onPress={() => setActiveTab('SETTINGS')}
                 >
-                    <Text style={[styles.tabText, { color: activeTab === 'SETTINGS' ? colors.primary : colors.gray }]}>Settings</Text>
+                    <Text style={[styles.tabText, { color: activeTab === 'SETTINGS' ? colors.primary : colors.textSecondary }]}>Settings</Text>
                 </TouchableOpacity>
             </View>
 

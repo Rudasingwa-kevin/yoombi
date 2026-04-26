@@ -226,10 +226,10 @@ router.get('/me', authenticateToken, async (req: any, res: Response) => {
   }
 });
 
-// Get Current User Favorites (Following)
+// Get Current User Favorites (Liked Restaurants)
 router.get('/me/favorites', authenticateToken, async (req: any, res: Response) => {
   try {
-    const favorites = await prisma.follow.findMany({
+    const favorites = await prisma.like.findMany({
       where: { userId: req.user.id },
       include: {
         restaurant: {
@@ -252,6 +252,36 @@ router.get('/me/favorites', authenticateToken, async (req: any, res: Response) =
     res.json({ success: true, data: formatted });
   } catch (error) {
     console.error('Get favorites error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get Current User Following
+router.get('/me/following', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const following = await prisma.follow.findMany({
+      where: { userId: req.user.id },
+      include: {
+        restaurant: {
+          include: {
+            _count: {
+              select: { followers: true, reviews: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formatted = following.map((f: any) => ({
+      ...f.restaurant,
+      totalReviews: f.restaurant._count.reviews,
+      followers: f.restaurant._count.followers
+    }));
+
+    res.json({ success: true, data: formatted });
+  } catch (error) {
+    console.error('Get following error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });

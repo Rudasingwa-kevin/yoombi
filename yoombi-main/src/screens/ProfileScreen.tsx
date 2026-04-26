@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Animated, Image } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { User, Settings, CreditCard, Bell, Shield, LogOut, ChevronRight, Moon, Sun, Calendar, HelpCircle, Star, MapPin } from 'lucide-react-native';
+import { User, Settings, CreditCard, Bell, Shield, LogOut, ChevronRight, Moon, Sun, Calendar, HelpCircle, Star, MapPin, Clock } from 'lucide-react-native';
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -14,14 +14,14 @@ const ProfileButton = ({ icon: Icon, label, color, onPress }: any) => {
     const { colors } = useTheme();
     const iconColor = color || colors.primary;
     return (
-        <TouchableOpacity style={[styles.actionItem, { borderBottomColor: colors.background }]} onPress={onPress}>
+        <TouchableOpacity style={[styles.actionItem, { borderBottomColor: colors.border }]} onPress={onPress}>
             <View style={styles.actionLeft}>
                 <View style={[styles.iconBox, { backgroundColor: iconColor + '20' }]}>
                     <Icon color={iconColor} size={20} />
                 </View>
                 <Text style={[styles.actionText, { color: colors.text }]}>{label}</Text>
             </View>
-            <ChevronRight color={colors.gray} size={20} />
+            <ChevronRight color={colors.textSecondary} size={20} />
         </TouchableOpacity>
     );
 };
@@ -55,8 +55,8 @@ const ProfileScreen = ({ navigation }: any) => {
                     )}
                 </View>
                 <Text style={[TYPOGRAPHY.h2, { color: colors.primary }]}>{user?.name}</Text>
-                <View style={[styles.roleBadge, { backgroundColor: colors.secondary + '20' }]}>
-                    <Text style={[styles.roleText, { color: colors.secondary }]}>{role}</Text>
+                <View style={[styles.roleBadge, { backgroundColor: colors.primary + '20' }]}>
+                    <Text style={[styles.roleText, { color: colors.primary }]}>{role}</Text>
                 </View>
             </View>
 
@@ -74,7 +74,7 @@ const ProfileScreen = ({ navigation }: any) => {
             )}
 
             <View style={[styles.section, { backgroundColor: colors.white }]}>
-                <Text style={[styles.sectionTitle, { color: colors.gray }]}>Preferences</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Preferences</Text>
                 <View style={styles.actionItem}>
                     <View style={styles.actionLeft}>
                         <View style={[styles.iconBox, { backgroundColor: colors.secondary + '20' }]}>
@@ -92,7 +92,7 @@ const ProfileScreen = ({ navigation }: any) => {
             </View>
 
             <View style={[styles.section, { backgroundColor: colors.white }]}>
-                <Text style={[styles.sectionTitle, { color: colors.gray }]}>Account Settings</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account Settings</Text>
                 <ProfileButton
                     icon={User}
                     label="Personal Information"
@@ -110,22 +110,19 @@ const ProfileScreen = ({ navigation }: any) => {
                 />
             </View>
 
-            <View style={[styles.section, { backgroundColor: colors.white }]}>
-                <Text style={[styles.sectionTitle, { color: colors.gray }]}>My Activity</Text>
-                <ProfileButton
-                    icon={Star}
-                    label="My Reviews & Photos"
-                    onPress={() => navigation.navigate('MyReviews')}
-                />
-                <ProfileButton
-                    icon={MapPin}
-                    label="My Dining Experiences"
-                    onPress={() => navigation.navigate('Experience')}
-                />
-            </View>
+            {role !== 'OWNER' && (
+                <View style={[styles.section, { backgroundColor: colors.white }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>My Activity</Text>
+                    <ProfileButton
+                        icon={Clock}
+                        label="My Activity History"
+                        onPress={() => navigation.navigate('MyActivity')}
+                    />
+                </View>
+            )}
 
             <View style={[styles.section, { backgroundColor: colors.white }]}>
-                <Text style={[styles.sectionTitle, { color: colors.gray }]}>Support & Info</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support & Info</Text>
                 <ProfileButton
                     icon={HelpCircle}
                     label="Help & Support"
@@ -135,7 +132,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
             {role === 'OWNER' && (
                 <View style={[styles.section, { backgroundColor: colors.white }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.gray }]}>Business Tools</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Business Tools</Text>
                     <ProfileButton
                         icon={Shield}
                         label="Manage Restaurant"
@@ -159,7 +156,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
             {role === 'ADMIN' && (
                 <View style={[styles.section, { backgroundColor: colors.white }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.gray }]}>Admin Controls</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Admin Controls</Text>
                     <ProfileButton icon={Shield} label="System Security" color="#EF4444" />
                     <ProfileButton icon={Settings} label="Global Config" color="#EF4444" />
                 </View>
