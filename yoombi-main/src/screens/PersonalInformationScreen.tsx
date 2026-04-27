@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Image, Alert, ActivityIndicator } from 'react-native';
-import { ChevronLeft, Camera, User, Mail, Phone, MapPin, Check, Edit2 } from 'lucide-react-native';
+import { Camera, User, Mail, Phone, MapPin, Check, Edit2 } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { TYPOGRAPHY, SHADOWS, SIZES } from '../constants/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage } from '../services/api';
+import ScreenHeader from '../components/ScreenHeader';
 
 const InfoField = ({ icon: Icon, label, value, onChangeText, editable, isEditing, isDark, colors }: any) => (
     <View style={styles.fieldContainer}>
@@ -99,25 +100,24 @@ const PersonalInformationScreen = ({ navigation }: any) => {
             style={[styles.container, { backgroundColor: colors.background }]}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={[styles.backButton, { backgroundColor: colors.white }]}
-                >
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Personal Details</Text>
-                <TouchableOpacity
-                    onPress={isEditing ? handleSave : () => setIsEditing(true)}
-                    style={[styles.editButton, { backgroundColor: isEditing ? colors.success : colors.primary }]}
-                >
-                    {isEditing ? (
-                        <Check color="white" size={20} />
-                    ) : (
-                        <Edit2 color={isDark ? colors.secondary : "white"} size={18} />
-                    )}
-                </TouchableOpacity>
-            </View>
+            <ScreenHeader
+                title="Personal Details"
+                subtitle="Your profile info"
+                onBack={() => navigation.goBack()}
+                accentIcon={<User color="#C5A059" size={16} />}
+                rightAction={
+                    <TouchableOpacity
+                        onPress={isEditing ? handleSave : () => setIsEditing(true)}
+                        style={[styles.editButton, { backgroundColor: isEditing ? colors.success : 'rgba(197,160,89,0.15)', borderColor: isEditing ? 'transparent' : 'rgba(197,160,89,0.3)', borderWidth: 1 }]}
+                    >
+                        {isEditing ? (
+                            <Check color="white" size={18} />
+                        ) : (
+                            <Edit2 color="#C5A059" size={16} />
+                        )}
+                    </TouchableOpacity>
+                }
+            />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.avatarSection}>
@@ -200,29 +200,12 @@ const PersonalInformationScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.small,
-    },
     editButton: {
         width: 40,
         height: 40,
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        ...SHADOWS.small,
     },
     scrollContent: { padding: 20, paddingBottom: 40 },
     avatarSection: { alignItems: 'center', marginBottom: 32 },

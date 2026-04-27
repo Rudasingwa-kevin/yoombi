@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { ChevronLeft, TrendingUp, Users, Star, Eye, ThumbsUp, MessageCircle } from 'lucide-react-native';
+import { TrendingUp, Users, Star, Eye, ThumbsUp, MessageCircle } from 'lucide-react-native';
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -30,13 +31,12 @@ const AnalyticsScreen = ({ navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { backgroundColor: colors.white, shadowColor: colors.shadow }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <ChevronLeft color={colors.primary} size={28} />
-                </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h2, { color: colors.primary }]}>Analytics</Text>
-                <View style={{ width: 28 }} />
-            </View>
+            <ScreenHeader
+                title="Analytics"
+                subtitle="Restaurant performance"
+                onBack={() => navigation.goBack()}
+                accentIcon={<TrendingUp color="#C5A059" size={16} />}
+            />
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.statsGrid}>
@@ -136,15 +136,6 @@ const AnalyticsScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        paddingTop: 60,
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        ...SHADOWS.light,
-    },
     content: { flex: 1, padding: 20 },
     statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
     statCard: {

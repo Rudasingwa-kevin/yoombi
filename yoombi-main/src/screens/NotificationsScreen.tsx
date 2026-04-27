@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, FlatList } from 'react-native';
-import { ChevronLeft, Bell, Mail, Smartphone, ShoppingBag, Info, ShieldCheck, Trash2, CheckCircle, Clock, Megaphone } from 'lucide-react-native';
+import { Bell, Mail, Smartphone, ShoppingBag, Info, ShieldCheck, Trash2, CheckCircle, Clock, Megaphone } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { TYPOGRAPHY, SHADOWS } from '../constants/theme';
 import { useNotifications, NotificationMessage } from '../context/NotificationContext';
+import ScreenHeader from '../components/ScreenHeader';
 
 const NotificationItem = ({ icon: Icon, title, description, value, onValueChange }: any) => {
     const { colors } = useTheme();
@@ -174,16 +175,12 @@ const NotificationsScreen = ({ navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={[styles.backButton, { backgroundColor: colors.white }]}
-                >
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Notifications</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader
+                title="Notifications"
+                subtitle="Inbox & Settings"
+                onBack={() => navigation.goBack()}
+                accentIcon={<Bell color="#C5A059" size={16} />}
+            />
 
             <View style={styles.tabContainer}>
                 <TouchableOpacity 
@@ -212,22 +209,6 @@ const NotificationsScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.small,
-    },
     tabContainer: {
         flexDirection: 'row',
         paddingHorizontal: 20,

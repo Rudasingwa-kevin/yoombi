@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Modal, ScrollView } from 'react-native';
-import { User as UserIcon, LogIn, Search, Sliders, X, Check, Star, History, Trash2 } from 'lucide-react-native';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Modal, ScrollView, Animated } from 'react-native';
+import { User as UserIcon, LogIn, Search, Sliders, X, Check, Star, History, Trash2, Bell } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 
@@ -15,6 +15,7 @@ import { RestaurantDTO, HomepageSectionDTO } from '../types/dto';
 import AuthRequirementModal from '../components/AuthRequirementModal';
 import { RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNotifications } from '../context/NotificationContext';
 
 const FilterSection = ({ title, options, selectedValue, onSelect, colors }: any) => (
     <View style={styles.filterSection}>
@@ -49,7 +50,20 @@ const SEARCH_HISTORY_KEY = 'yoombi_search_history';
 const DiscoverScreen = ({ navigation }: any) => {
     const { user, role } = useAuth();
     const { colors, isDark } = useTheme();
+    const { notifications } = useNotifications();
     const isGuest = role === 'GUEST';
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    // Entrance animation
+    const headerSlide = useRef(new Animated.Value(-30)).current;
+    const headerOpacity = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(headerSlide, { toValue: 0, duration: 420, useNativeDriver: true }),
+            Animated.timing(headerOpacity, { toValue: 1, duration: 420, useNativeDriver: true }),
+        ]).start();
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -182,34 +196,68 @@ const DiscoverScreen = ({ navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Header */}
-            <LinearGradient
-                colors={['#050B10', '#0A1A2F']}
-                style={styles.header}
-            >
-                <View>
-                    <Text style={[TYPOGRAPHY.h1, { color: colors.secondary, letterSpacing: 1 }]}>Yoombi</Text>
-                    <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.5)' }]}>Elite Dining Across Rwanda</Text>
-                </View>
-
-                <TouchableOpacity
-                    style={[styles.profileButton, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(197, 160, 89, 0.2)', borderWidth: 1 }]}
-                    onPress={() => isGuest ? navigation.navigate('Login') : navigation.navigate('Profile')}
+            {/* Modernized Header */}
+            <Animated.View style={{ transform: [{ translateY: headerSlide }], opacity: headerOpacity }}>
+                <LinearGradient
+                    colors={isDark ? ['#020709', '#050F1C', '#0A1A2F'] : ['#030C14', '#051923', '#0A2744']}
+                    style={styles.header}
                 >
-                    <View style={styles.greetingContainer}>
-                        <Text style={[styles.greetingText, { color: colors.secondary }]}>
-                            {isGuest ? 'Join Gold' : user?.name.split(' ')[0]}
-                        </Text>
-                        <View style={[styles.avatarCircle, { backgroundColor: colors.secondary }]}>
-                            {isGuest ? (
-                                <LogIn color={colors.primary} size={14} />
-                            ) : (
-                                <UserIcon color={colors.primary} size={14} />
-                            )}
-                        </View>
+                    {/* Gold accent bar */}
+                    <LinearGradient
+                        colors={['transparent', '#C5A059', '#8B6914', '#C5A059', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.headerAccentLine}
+                    />
+
+                    {/* Brand block */}
+                    <View style={styles.headerBrand}>
+                        <Text style={styles.brandName}>Yoombi</Text>
+                        <Text style={styles.brandTagline}>Elite Dining · Rwanda</Text>
                     </View>
-                </TouchableOpacity>
-            </LinearGradient>
+
+                    {/* Right cluster */}
+                    <View style={styles.headerRight}>
+                        {/* Notification bell */}
+                        {!isGuest && (
+                            <TouchableOpacity
+                                style={styles.bellButton}
+                                onPress={() => navigation.navigate('Notifications')}
+                                activeOpacity={0.75}
+                            >
+                                <Bell color="rgba(255,255,255,0.75)" size={20} strokeWidth={2} />
+                                {unreadCount > 0 && (
+                                    <View style={styles.notifBadge}>
+                                        <Text style={styles.notifBadgeText}>
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Profile pill */}
+                        <TouchableOpacity
+                            style={styles.profilePill}
+                            onPress={() => isGuest ? navigation.navigate('Login') : navigation.navigate('Profile')}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.avatarDot}>
+                                {isGuest ? (
+                                    <LogIn color="#051923" size={13} strokeWidth={2.5} />
+                                ) : (
+                                    <Text style={styles.avatarInitial}>
+                                        {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                                    </Text>
+                                )}
+                            </View>
+                            <Text style={styles.profileName} numberOfLines={1}>
+                                {isGuest ? 'Join' : user?.name?.split(' ')[0]}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </LinearGradient>
+            </Animated.View>
 
             {/* Search & Filter Bar */}
             <View style={styles.searchContainer}>
@@ -435,18 +483,103 @@ const DiscoverScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: {
-        paddingTop: 64,
+        paddingTop: 56,
         paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingBottom: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    subtitle: { ...TYPOGRAPHY.bodySmall, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 10, fontWeight: '700' },
-    profileButton: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20 },
-    greetingContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    greetingText: { fontSize: 12, fontWeight: '700' },
-    avatarCircle: { width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    headerAccentLine: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 1.5,
+        opacity: 0.6,
+    },
+    headerBrand: {
+        flex: 1,
+    },
+    brandName: {
+        fontSize: 30,
+        fontWeight: '800',
+        color: '#C5A059',
+        letterSpacing: 0.5,
+    },
+    brandTagline: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.45)',
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
+        marginTop: 2,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    bellButton: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.07)',
+        borderWidth: 1,
+        borderColor: 'rgba(197,160,89,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    notifBadge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#C5A059',
+        borderRadius: 8,
+        minWidth: 16,
+        height: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 3,
+        borderWidth: 1.5,
+        borderColor: '#050B10',
+    },
+    notifBadgeText: {
+        color: '#051923',
+        fontSize: 9,
+        fontWeight: '900',
+    },
+    profilePill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: 'rgba(197,160,89,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(197,160,89,0.3)',
+        borderRadius: 20,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+    },
+    avatarDot: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#C5A059',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarInitial: {
+        color: '#051923',
+        fontSize: 11,
+        fontWeight: '900',
+    },
+    profileName: {
+        color: '#C5A059',
+        fontSize: 12,
+        fontWeight: '700',
+        maxWidth: 70,
+    },
     searchContainer: {
         flexDirection: 'row',
         paddingHorizontal: 20,

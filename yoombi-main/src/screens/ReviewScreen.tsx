@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Star, X, ChevronLeft } from 'lucide-react-native';
+import { Star, X } from 'lucide-react-native';
 import { SHADOWS, TYPOGRAPHY, SIZES } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useToast } from '../context/ToastContext';
 import { restaurantService, menuService, reviewService } from '../services/api';
+import ScreenHeader from '../components/ScreenHeader';
 
 const RATING_CATEGORIES = [
     { id: 'food', label: 'Food Quality' },
@@ -84,13 +85,12 @@ const ReviewScreen = ({ route, navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.primary }]}>Write a Review</Text>
-                <View style={{ width: 24 }} />
-            </View>
+            <ScreenHeader
+                title="Write a Review"
+                subtitle={restaurantName}
+                onBack={() => navigation.goBack()}
+                accentIcon={<Star color="#C5A059" size={16} fill="#C5A059" />}
+            />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -157,16 +157,6 @@ const ReviewScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: { padding: 4 },
-    headerTitle: { ...TYPOGRAPHY.h3, fontSize: 18 },
     content: { padding: 24 },
     restaurantName: { ...TYPOGRAPHY.h2, textAlign: 'center', marginBottom: 8 },
     subtitle: { ...TYPOGRAPHY.bodyMedium, textAlign: 'center', marginBottom: 32 },

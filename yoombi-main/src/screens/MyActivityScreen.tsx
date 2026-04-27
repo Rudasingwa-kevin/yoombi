@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Image, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { ChevronLeft, Star, MapPin, Calendar, Clock, Filter, MessageSquare, ThumbsUp } from 'lucide-react-native';
+import { Star, MapPin, Calendar, Clock, Filter, MessageSquare, ThumbsUp } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { TYPOGRAPHY, SHADOWS } from '../constants/theme';
 import api, { authService } from '../services/api';
 import { MyReviewDTO } from '../types/dto';
+import ScreenHeader from '../components/ScreenHeader';
 
 interface Visit {
     id: string;
@@ -202,13 +203,12 @@ const MyActivityScreen = ({ navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.white }]}>
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>My Activity</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader
+                title="My Activity"
+                subtitle="Visits & reviews"
+                onBack={() => navigation.goBack()}
+                accentIcon={<Clock color="#C5A059" size={16} />}
+            />
 
             <View style={styles.filterBar}>
                 <FilterButton label="All" value="ALL" />
@@ -248,22 +248,6 @@ const MyActivityScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.small,
-    },
     filterBar: {
         flexDirection: 'row',
         paddingHorizontal: 20,

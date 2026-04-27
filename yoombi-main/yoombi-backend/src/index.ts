@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notification';
 import analyticsRoutes from './routes/analytics';
 import cmsRoutes from './routes/cms';
 import { authenticateToken, authorizeRole } from './middleware/auth';
+import { sanitizeInput } from './middleware/sanitize';
 import { PORT } from './config/env';
 
 const app = express();
@@ -29,6 +30,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // 2. CORS and JSON
 app.use(cors());
 app.use(express.json());
+
+// 3. Security Middleware (Sanitize JSON body, query, and params)
+app.use(sanitizeInput);
 
 // Routes
 app.use('/api/auth', authRoutes);

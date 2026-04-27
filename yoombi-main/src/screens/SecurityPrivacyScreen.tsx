@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Switch, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Modal } from 'react-native';
-import { ChevronLeft, Lock, Eye, EyeOff, Shield, ShieldCheck, UserX, ChevronRight, Fingerprint } from 'lucide-react-native';
+import { Lock, Eye, EyeOff, Shield, ShieldCheck, UserX, ChevronRight, Fingerprint } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { TYPOGRAPHY, SHADOWS, SIZES } from '../constants/theme';
 import { userService } from '../services/api';
 import { isStrongPassword, getPasswordErrorMessage } from '../utils/validation';
+import ScreenHeader from '../components/ScreenHeader';
 
 const SecurityItem = ({ icon: Icon, title, description, onPress, children }: any) => {
     const { colors } = useTheme();
@@ -90,16 +91,12 @@ const SecurityPrivacyScreen = ({ navigation }: any) => {
             style={[styles.container, { backgroundColor: colors.background }]}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={[styles.backButton, { backgroundColor: colors.white }]}
-                >
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Security & Privacy</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader
+                title="Security & Privacy"
+                subtitle="Account protection"
+                onBack={() => navigation.goBack()}
+                accentIcon={<Shield color="#C5A059" size={16} />}
+            />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.section}>
@@ -295,22 +292,6 @@ const SecurityPrivacyScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.small,
-    },
     scrollContent: { padding: 20, paddingBottom: 40 },
     section: { marginBottom: 28 },
     sectionTitle: { ...TYPOGRAPHY.bodySmall, fontWeight: '700', marginBottom: 12, marginLeft: 8, textTransform: 'uppercase' },

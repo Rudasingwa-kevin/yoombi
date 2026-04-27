@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
-import { ChevronLeft, Search, MessageCircle, Phone, Mail, ChevronRight, HelpCircle, Book, Shield, Info } from 'lucide-react-native';
+import { Search, MessageCircle, Phone, Mail, ChevronRight, HelpCircle, Book, Shield, Info } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { TYPOGRAPHY, SHADOWS, SIZES } from '../constants/theme';
+import ScreenHeader from '../components/ScreenHeader';
 
 const HelpItem = ({ icon: Icon, title, onPress }: any) => {
     const { colors } = useTheme();
@@ -24,16 +25,12 @@ const HelpSupportScreen = ({ navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={[styles.backButton, { backgroundColor: colors.white }]}
-                >
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[TYPOGRAPHY.h3, { color: colors.primary }]}>Help & Support</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader
+                title="Help & Support"
+                subtitle="Concierge desk"
+                onBack={() => navigation.goBack()}
+                accentIcon={<HelpCircle color="#C5A059" size={16} />}
+            />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={[styles.searchSection, { backgroundColor: colors.white }]}>
@@ -97,22 +94,6 @@ const HelpSupportScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...SHADOWS.small,
-    },
     scrollContent: { padding: 20, paddingBottom: 40 },
     searchSection: {
         flexDirection: 'row',

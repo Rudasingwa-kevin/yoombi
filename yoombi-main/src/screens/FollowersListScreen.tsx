@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
-import { ChevronLeft, Search, User } from 'lucide-react-native';
+import { Search, User, Users } from 'lucide-react-native';
 import { SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { restaurantService } from '../services/api';
+import ScreenHeader from '../components/ScreenHeader';
 
 interface Follower {
     id: string;
@@ -65,13 +66,12 @@ const FollowersListScreen = ({ navigation }: any) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ChevronLeft color={colors.primary} size={24} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.primary }]}>Followers</Text>
-                <View style={{ width: 24 }} />
-            </View>
+            <ScreenHeader
+                title="Followers"
+                subtitle="Your community"
+                onBack={() => navigation.goBack()}
+                accentIcon={<Users color="#C5A059" size={16} />}
+            />
 
             <View style={styles.searchContainer}>
                 <View style={[styles.searchBar, { backgroundColor: isDark ? colors.background : '#F3F4F6', borderWidth: 1, borderColor: colors.border }]}>
@@ -108,16 +108,6 @@ const FollowersListScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
-    },
-    backButton: { padding: 4 },
-    headerTitle: { ...TYPOGRAPHY.h3, fontSize: 18 },
     searchContainer: { padding: 20, paddingBottom: 10 },
     searchBar: {
         flexDirection: 'row',
